@@ -308,7 +308,7 @@ func getMaltiCheck(hash string) {
 	}
 	sb := string(body)
 	result := gjson.Get(sb, "message")
-	if result.String() == "Not Found" {
+	if result.String() == "Not found" {
 		fmt.Printf("\nMaltiverse: Not found")
 	} else {
 		verdict := gjson.Get(sb, "classification")
