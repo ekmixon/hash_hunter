@@ -13,6 +13,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/tidwall/gjson"
 )
@@ -42,6 +44,7 @@ func init() {
 }
 
 func main() {
+	defer timeTrack(time.Now())
 	flag.Parse()
 
 	if *hash != "" {
@@ -52,6 +55,11 @@ func main() {
 		enterHash()
 	}
 	checkHashes()
+}
+
+func timeTrack(start time.Time) {
+	elapsed := time.Since(start)
+	fmt.Printf("\n\nHash Hunter completed. Search took %s", elapsed)
 }
 
 func readConfig(filename string) map[string]string {
@@ -113,26 +121,52 @@ func verifySha256(hash string) bool {
 // loop through API checks for each hash
 func checkHashes() {
 	for _, hash := range hashes {
+		var waitgroup sync.WaitGroup
+		waitgroup.Add(7)
 		fmt.Printf("\n\n%v", hash)
 		if virusTotal != "" {
-			getVtCheck(hash)
+			go func() {
+				getVtCheck(hash)
+				waitgroup.Done()
+			}()
 		}
 		if hybridAnalysis != "" {
-			getHACheck(hash)
+			go func() {
+				getHACheck(hash)
+				waitgroup.Done()
+			}()
 		}
 		if malwareBazaar != "" {
-			getMBCheck(hash)
+			go func() {
+				getMBCheck(hash)
+				waitgroup.Done()
+			}()
 		}
 		if malshare != "" {
-			getMSCheck(hash)
+			go func() {
+				getMSCheck(hash)
+				waitgroup.Done()
+			}()
 		}
 		if intezerAnalyze != "" {
-			getIntCheck(hash)
+			go func() {
+				getIntCheck(hash)
+				waitgroup.Done()
+			}()
 		}
 		if maltiverse != "" {
-			getMaltiCheck(hash)
+			go func() {
+				getMaltiCheck(hash)
+				waitgroup.Done()
+			}()
 		}
+		go func() {
+			getInQuest(hash)
+			waitgroup.Done()
+		}()
+		waitgroup.Wait()
 	}
+
 }
 
 // Check Virus Total
@@ -298,11 +332,13 @@ func getMaltiCheck(hash string) {
 	req, _ := http.NewRequest("GET", url, nil)
 	bearer := "Bearer " + maltiverse
 	req.Header.Add("Authorization", bearer)
-	resp, err := client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -313,5 +349,37 @@ func getMaltiCheck(hash string) {
 	} else {
 		verdict := gjson.Get(sb, "classification")
 		fmt.Printf("\nMaltiverse: verdict is %v", verdict)
+	}
+}
+
+func getInQuest(hash string) {
+	url := ("https://labs.inquest.net/api/dfi/details?sha256=" + hash)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	req.Header.Set("Authorization", "Basic null")
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	sb := string(body)
+	result := gjson.Get(sb, "success")
+	if result.String() == "false" {
+		fmt.Printf("\nInQuest: Not found")
+	} else {
+		verdict := gjson.Get(sb, "data.classification")
+		// s_verdict := verdict string(verdict)
+		fmt.Printf("\nInQuest Labs: verdict is %v", strings.ToLower(verdict.String()))
 	}
 }

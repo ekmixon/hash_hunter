@@ -1,14 +1,15 @@
 # Hash Hunter  
 
-A simple program for finding if a hash exists on various malware repositories. No more, no less. Useful if you just want to check where a sample might be available. 
+A simple, multithreaded program for finding if a hash exists on various malware repositories. No more, no less. Useful if you just want to check where a sample might be available. 
 
 Currently implemented 
-- Virus Total
-- Hybrid Analysis
-- MalShare
-- Malware Bazaar
-- Intezer
-- Maltiverse
+- Virus Total (paid API required)
+- Hybrid Analysis (registration required)
+- MalShare (registration required)
+- Malware Bazaar (registration required)
+- Intezer (registration required)
+- Maltiverse (registration required)
+- InQuest Labs (free tier limited to 1337 queries per day)
 
 ## Usage 
 
@@ -23,7 +24,9 @@ If you don't specify `-f` or `-h` then you will be presented with the option to 
 
 ## Dependencies
 
-Enter your API keys for each service. Add these to a config file `config.json` as per below:  
+Enter your API keys for each service, if required. If you do not have an API key then simple leave as `""`.  
+
+Add these to a config file `config.json` as per below:  
 
 ```
 {"virusTotal":"KEY",
@@ -43,7 +46,7 @@ go get github.com/tidwall/gjson
 ## Sample Output
 
 ```
-PS C:\> go run .\hh.go -h e4a877ba15d80c1fb13c22ac4c90c7211452082f8d65f4393646e480cedffb3b
+PS C:\> hh.exe -h e4a877ba15d80c1fb13c22ac4c90c7211452082f8d65f4393646e480cedffb3b
 
 e4a877ba15d80c1fb13c22ac4c90c7211452082f8d65f4393646e480cedffb3b
 Virus Total: 13 malicious, 46 undetected
@@ -52,4 +55,7 @@ Malware Bazaar: Not found
 MalShare: Not found
 Intezer: Not found
 Maltiverse: verdict is malicious
+InQuest Labs: verdict is malicious
 ```
+
+The order returned is based on the API latency and may differ each time.  
