@@ -30,6 +30,8 @@ var malwareBazaar string
 var malshare string
 var intezerAnalyze string
 var maltiverse string
+var polyswarm string
+var urlhaus string
 
 var hashes = make([]string, 0)
 
@@ -41,6 +43,8 @@ func init() {
 	malshare = config["malshare"]
 	intezerAnalyze = config["intezerAnalyze"]
 	maltiverse = config["maltiverse"]
+	polyswarm = config["polyswarm"]
+	urlhaus = config["urlhaus"]
 }
 
 func main() {
@@ -122,7 +126,7 @@ func verifySha256(hash string) bool {
 func checkHashes() {
 	for _, hash := range hashes {
 		var waitgroup sync.WaitGroup
-		waitgroup.Add(7)
+		waitgroup.Add(9)
 		fmt.Printf("\n\n%v", hash)
 		if virusTotal != "" {
 			go func() {
@@ -160,13 +164,24 @@ func checkHashes() {
 				waitgroup.Done()
 			}()
 		}
+		if polyswarm != "" {
+			go func() {
+				getPolyCheck(hash)
+				waitgroup.Done()
+			}()
+		}
+		if urlhaus != "" {
+			go func() {
+				getUrlhausCheck(hash)
+				waitgroup.Done()
+			}()
+		}
 		go func() {
 			getInQuest(hash)
 			waitgroup.Done()
 		}()
 		waitgroup.Wait()
 	}
-
 }
 
 // Check Virus Total
@@ -214,7 +229,7 @@ func getHACheck(hash string) {
 	}
 	sb := string(body)
 	result := gjson.Get(sb, "message")
-	if result.String() == "Not Found" {
+	if result.String() == "Not Found" || result.String() == "Sorry, this hash was reported for abuse and is not available" {
 		fmt.Printf("\nHybrid Analysis: Not found")
 	} else {
 		verdict := gjson.Get(sb, "verdict")
@@ -247,9 +262,11 @@ func getMBCheck(hash string) {
 		fmt.Printf("\nMalware Bazaar: Not found")
 	} else if result.String() == "ok" {
 		signature := gjson.Get(sb, "data.0.signature")
-		fmt.Printf("\nMalware Bazaar: recorded as %v", signature)
-	} else {
-		fmt.Printf("\nMalware Bazaar: error")
+		if signature.String() == "" {
+			fmt.Printf("\nMalware Bazaar: recorded as unknown")
+		} else {
+			fmt.Printf("\nMalware Bazaar: recorded as %v", signature)
+		}
 	}
 }
 
@@ -381,5 +398,40 @@ func getInQuest(hash string) {
 		verdict := gjson.Get(sb, "data.classification")
 		// s_verdict := verdict string(verdict)
 		fmt.Printf("\nInQuest Labs: verdict is %v", strings.ToLower(verdict.String()))
+	}
+}
+
+func getPolyCheck(hash string) {
+	// TODO
+}
+
+func getUrlhausCheck(hash string) {
+	apiUrl := ("https://urlhaus-api.abuse.ch/v1/payload/")
+
+	data := url.Values{}
+	data.Set("sha256_hash", hash)
+
+	client := &http.Client{}
+	req, _ := http.NewRequest(http.MethodPost, apiUrl, strings.NewReader(data.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	sb := string(body)
+	result := gjson.Get(sb, "query_status")
+	if result.String() == "no_results" {
+		fmt.Printf("\nURLHaus: Not found")
+	} else if result.String() == "ok" {
+		signature := gjson.Get(sb, "signature")
+		if signature.String() == "" {
+			fmt.Printf("\nURLHaus: recorded as unknown")
+		} else {
+			fmt.Printf("\nURLHaus: recorded as %v", signature)
+		}
 	}
 }

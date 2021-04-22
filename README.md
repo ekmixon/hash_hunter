@@ -9,6 +9,7 @@ Currently implemented
 - Malware Bazaar (registration required)
 - Intezer (registration required)
 - Maltiverse (registration required)
+- URLHaus (Twitter account required)
 - InQuest Labs (free tier limited to 1337 queries per day)
 
 ## Usage 
@@ -34,6 +35,7 @@ Add these to a config file `config.json` as per below:
 "malwareBazaar":"KEY",
 "malshare":"KEY",
 "maltiverse":"KEY",
+"urlhaus":"KEY",
 "intezerAnalyze":"KEY"}
 ```
 
@@ -59,3 +61,10 @@ InQuest Labs: verdict is malicious
 ```
 
 The order returned is based on the API latency and may differ each time.  
+
+## To Do
+
+[] Download File if available  
+[] Refactor API request to single function  
+[] Add PolySwarm  
+[] Error Checking   
