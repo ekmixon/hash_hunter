@@ -64,7 +64,7 @@ The order returned is based on the API latency and may differ each time.
 
 ## To Do
 
-[] Download File if available  
-[] Refactor API request to single function  
-[] Add PolySwarm  
-[] Error Checking   
+- [ ] Download File if available  
+- [ ] Refactor API request to single function  
+- [ ] Add PolySwarm  
+- [ ] Error Checking   
