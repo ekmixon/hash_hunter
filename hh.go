@@ -363,6 +363,9 @@ func getMaltiCheck(hash string) {
 	result := gjson.Get(sb, "message")
 	if result.String() == "Not found" {
 		fmt.Printf("\nMaltiverse: Not found")
+	}
+	if result.String() == "Internal Server Error" {
+		fmt.Printf("\nMaltiverse: Server Error")
 	} else {
 		verdict := gjson.Get(sb, "classification")
 		fmt.Printf("\nMaltiverse: verdict is %v", verdict)
