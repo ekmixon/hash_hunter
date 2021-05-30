@@ -103,7 +103,7 @@ func enterHash() {
 		text := scanner.Text()
 		if len(text) != 0 {
 			match := verifySha256(text)
-			if match == false {
+			if !match {
 				continue
 			}
 			hashes = append(hashes, text)
@@ -116,7 +116,7 @@ func enterHash() {
 // check validity of SHA256
 func verifySha256(hash string) bool {
 	match, _ := regexp.MatchString("[A-Fa-f0-9]{64}", hash)
-	if match != true {
+	if !match {
 		fmt.Println("[!] Invalid SHA256 hash.")
 	}
 	return match
